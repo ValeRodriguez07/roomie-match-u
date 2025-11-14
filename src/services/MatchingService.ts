@@ -2,12 +2,21 @@ import type { Match, User, Publication } from "../types";
 import { eventBus } from "./EventBus";
 import { userService } from "./UserService";
 import { publicationService } from "./PublicationService";
+import { mockMatches } from "../data/mockData";
 
 class MatchingService {
   private matches: Map<string, Match> = new Map();
 
   constructor() {
+    this.initializeMockData();
     this.setupEventListeners();
+  }
+
+  private initializeMockData() {
+    // Inicializar con matches de ejemplo
+    mockMatches.forEach(match => {
+      this.matches.set(match.id, match);
+    });
   }
 
   private setupEventListeners() {

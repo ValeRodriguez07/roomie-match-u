@@ -1,4 +1,4 @@
-import type { User, Publication } from "../types";
+import type { User, Publication, Match } from "../types";
 
 export const mockUsers: User[] = [
   {
@@ -117,7 +117,7 @@ export const mockPublications: Publication[] = [
     userId: "user_3",
     title: "Habitación con luz natural en Chamberí",
     description:
-      "Acogedora habitación con mucha luz natural en piso compartido con dos compañeras. Zona muy bien comunicada.",
+      "Acogedora habitación con mucha luz natural en piso compartido con two compañeras. Zona muy bien comunicada.",
     price: 480,
     location: "Chamberí",
     city: "Madrid",
@@ -148,4 +148,27 @@ export const mockPublications: Publication[] = [
     createdAt: new Date("2024-01-18"),
     status: "active",
   },
+];
+
+export const mockMatches: Match[] = [
+  {
+    id: "match_1",
+    user1Id: "user_2", // Carlos (busco_lugar)
+    user2Id: "user_1", // María (tengo_lugar)
+    publicationId: "pub_1", // Habitación de María en Salamanca
+    score: 0.85,
+    status: "pending",
+    createdAt: new Date("2024-01-26"),
+    updatedAt: new Date("2024-01-26"),
+  },
+  {
+    id: "match_2",
+    user1Id: "user_2", // Carlos
+    user2Id: "user_3", // Ana
+    publicationId: "pub_2", // Habitación de Ana en Chamberí
+    score: 0.78,
+    status: "pending", 
+    createdAt: new Date("2024-01-27"),
+    updatedAt: new Date("2024-01-27"),
+  }
 ];

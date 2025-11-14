@@ -134,3 +134,14 @@ export const translations = {
 
 export type Language = keyof typeof translations;
 export type TranslationKey = keyof (typeof translations)["en"];
+
+export interface Match {
+  id: string;
+  user1Id: string;
+  user2Id: string;
+  publicationId: string; // Quita el ? para hacerlo obligatorio
+  score: number;
+  status: "pending" | "accepted" | "rejected";
+  createdAt: Date;
+  updatedAt: Date;
+}

@@ -5,6 +5,7 @@ import { PublicationCard } from "./PublicationCard";
 import { usePublications } from "../hooks/usePublications";
 import { matchingService } from "../services/MatchingService";
 import { useApp } from "../context/AppContext";
+import { useMatches } from "../hooks/useMatches"; // AGREGAR ESTA IMPORTACIÓN
 
 export const ExploreScreen: React.FC = () => {
   const [filters, setFilters] = useState({
@@ -17,15 +18,32 @@ export const ExploreScreen: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const { publications, loading, error, loadPublications } = usePublications();
   const { user, t } = useApp();
+  const { matches } = useMatches(); // AGREGAR PARA OBTENER MATCHES
 
   useEffect(() => {
     loadPublications();
   }, []);
 
+  // FUNCIÓN PARA FILTRAR PUBLICACIONES QUE YA TIENEN MATCH
+  const getFilteredPublications = () => {
+    if (!user || user.type !== "busco_lugar") return publications;
+    
+    // Obtener IDs de publicaciones que ya tienen match
+    const publicationIdsWithMatches = matches
+      .filter(match => match.user1Id === user.id) // Solo matches iniciados por el usuario
+      .map(match => match.publicationId);
+    
+    // Filtrar publicaciones que NO tienen match del usuario actual
+    return publications.filter(
+      publication => !publicationIdsWithMatches.includes(publication.id)
+    );
+  };
+
   const handleLike = async (publication: Publication) => {
     if (!user) return;
 
     try {
+      // Crear match entre el usuario actual y el dueño de la publicación
       await matchingService.createMatch({
         user1Id: user.id,
         user2Id: publication.userId,
@@ -34,15 +52,22 @@ export const ExploreScreen: React.FC = () => {
       });
 
       alert(`${t("matchFound")} ${t("matchNotification")}`);
+      
+      // Recargar publicaciones para ocultar la que acaba de solicitar
+      loadPublications();
+      
     } catch (error) {
       console.error("Error creating match:", error);
+      alert("Error al crear el match");
     }
   };
 
   const handleDislike = (publication: Publication) => {
     console.log("Publication disliked:", publication.id);
+    // Opcional: implementar lógica de "no me interesa"
   };
 
+  // Resto del código sin cambios...
   const applyFilters = () => {
     loadPublications(filters);
     setShowFilters(false);
@@ -68,10 +93,10 @@ export const ExploreScreen: React.FC = () => {
     );
   }
 
+  const filteredPublications = getFilteredPublications();
+
   return (
     <div className="flex-1 bg-gray-50 pt-16 pb-16 md:pb-0">
-      {" "}
-      {/* Padding para header y bottom nav */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Search Bar */}
         <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
@@ -206,7 +231,7 @@ export const ExploreScreen: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {publications.map((publication) => (
+            {filteredPublications.map((publication) => (
               <PublicationCard
                 key={publication.id}
                 publication={publication}
@@ -218,9 +243,14 @@ export const ExploreScreen: React.FC = () => {
           </div>
         )}
 
-        {publications.length === 0 && !loading && (
+        {filteredPublications.length === 0 && !loading && (
           <div className="text-center py-12">
-            <div className="text-gray-500">{t("noPublications")}</div>
+            <div className="text-gray-500">
+              {user?.type === "busco_lugar" && matches.length > 0 
+                ? "Has solicitado todas las publicaciones disponibles. Revisa tus matches."
+                : t("noPublications")
+              }
+            </div>
           </div>
         )}
       </div>

@@ -19,6 +19,7 @@ export const useMatches = () => {
       setMatches(data);
     } catch (err) {
       setError('Error al cargar matches');
+      console.error('Error loading matches:', err);
     } finally {
       setLoading(false);
     }
@@ -35,6 +36,7 @@ export const useMatches = () => {
       return updatedMatch;
     } catch (err) {
       setError('Error al aceptar match');
+      console.error('Error accepting match:', err);
       throw err;
     } finally {
       setLoading(false);
@@ -52,15 +54,19 @@ export const useMatches = () => {
       return updatedMatch;
     } catch (err) {
       setError('Error al rechazar match');
+      console.error('Error rejecting match:', err);
       throw err;
     } finally {
       setLoading(false);
     }
   };
 
+  // Recargar matches cada 5 segundos para ver actualizaciones
   useEffect(() => {
     if (user) {
       loadMatches();
+      const interval = setInterval(loadMatches, 5000);
+      return () => clearInterval(interval);
     }
   }, [user]);
 
