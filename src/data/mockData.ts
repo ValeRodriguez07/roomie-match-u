@@ -5,6 +5,9 @@ export const mockUsers: User[] = [
     id: "user_1",
     email: "maria@example.com",
     name: "María García",
+    username: "mariag",
+    phone: "+34611122334",
+    acceptedTerms: true,
     type: "tengo_lugar",
     avatar: "",
     preferences: {
@@ -35,6 +38,9 @@ export const mockUsers: User[] = [
     id: "user_2",
     email: "carlos@example.com",
     name: "Carlos Rodríguez",
+    username: "carlitos",
+    phone: "+34622233445",
+    acceptedTerms: true,
     type: "busco_lugar",
     avatar: "",
     preferences: {
@@ -65,6 +71,9 @@ export const mockUsers: User[] = [
     id: "user_3",
     email: "ana@example.com",
     name: "Ana López",
+    username: "anita",
+    phone: "+34633344556",
+    acceptedTerms: true,
     type: "tengo_lugar",
     avatar: "",
     preferences: {

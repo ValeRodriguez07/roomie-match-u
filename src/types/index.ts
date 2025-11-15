@@ -2,6 +2,9 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  username?: string;
+  phone?: string;
+  acceptedTerms?: boolean;
   type: "busco_lugar" | "tengo_lugar";
   avatar?: string;
   preferences: UserPreferences;

@@ -22,14 +22,46 @@ class UserService {
     // Simular latencia de API
     await this.simulateLatency();
 
+    // Validaciones adicionales: username, phone y aceptación de términos
+    if (!userData.username || userData.username.trim().length === 0) {
+      throw new Error("El nombre de usuario es obligatorio");
+    }
+
+    // Verificar unicidad de username
+    const existingByUsername = Array.from(this.users.values()).find(
+      (u) => u.username === userData.username
+    );
+    if (existingByUsername) {
+      throw new Error("El nombre de usuario ya está en uso");
+    }
+
+    if (!userData.phone || userData.phone.trim().length === 0) {
+      throw new Error("El teléfono es obligatorio");
+    }
+
+    // Validación simple de teléfono (acepta dígitos y opcional +, 7-15 dígitos)
+    const phoneNormalized = userData.phone.replace(/\s+/g, "");
+    const phoneRegex = /^\+?\d{7,15}$/;
+    if (!phoneRegex.test(phoneNormalized)) {
+      throw new Error("Formato de teléfono inválido");
+    }
+
+    if (!userData.acceptedTerms) {
+      throw new Error("Debe aceptar los términos y condiciones para registrarse");
+    }
+
     const newUser: User = {
       ...userData,
+      phone: phoneNormalized,
       id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       createdAt: new Date(),
       verified: false,
     };
 
     this.users.set(newUser.id, newUser);
+
+    // Establecer como usuario actual
+    this.currentUser = newUser;
 
     // Emitir evento de usuario registrado
     await eventBus.publish({
