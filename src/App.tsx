@@ -12,10 +12,8 @@ const AppContent: React.FC = () => {
   const { user, t } = useApp();
   const { matches, acceptMatch, rejectMatch } = useMatches();
   const [activeTab, setActiveTab] = useState('explore');
-
-  if (!user) {
-    return <LoginScreen />;
-  }
+  const [selectedChatMatch, setSelectedChatMatch] = useState<string | null>(null);
+  const [selectedChatUserName, setSelectedChatUserName] = useState<string>('');
 
   // FUNCIÓN PARA OBTENER EL NOMBRE DEL USUARIO POR ID
   const getUserNameById = (userId: string) => {
@@ -55,6 +53,38 @@ const AppContent: React.FC = () => {
   };
 
   const userMatches = getUserMatches();
+
+  React.useEffect(() => {
+    const handler = (e: any) => {
+      const detail = e.detail || {};
+      const actionUrl: string | undefined = detail.actionUrl;
+      if (!actionUrl) return;
+
+      // Example actionUrl: /chat/match_1
+      if (actionUrl.startsWith('/chat/')) {
+        const matchId = actionUrl.replace('/chat/', '');
+        const found = userMatches.find(m => m.id === matchId) || matches.find(m => m.id === matchId);
+        if (found) {
+          const otherUserId = user?.id === found.user1Id ? found.user2Id : found.user1Id;
+          const otherUserName = getUserNameById(otherUserId);
+          setSelectedChatUserName(otherUserName);
+          setSelectedChatMatch(found.id);
+          setActiveTab('chat');
+        } else {
+          // If not found in current userMatches, still switch to chat tab
+          setActiveTab('chat');
+        }
+      }
+    };
+
+    window.addEventListener('app:notificationClick', handler as EventListener);
+    return () => window.removeEventListener('app:notificationClick', handler as EventListener);
+  }, [userMatches, matches, user]);
+
+  // Si no hay usuario logueado, renderizar la pantalla de login
+  if (!user) {
+    return <LoginScreen />;
+  }
 
   const renderContent = () => {
     switch (activeTab) {
@@ -158,20 +188,123 @@ const AppContent: React.FC = () => {
           </div>
         );
       case 'chat':
-        const acceptedMatch = userMatches.find(m => m.status === 'accepted');
         return (
-          <div className="flex-1 bg-gray-50 p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('chat')}</h2>
-            {acceptedMatch ? (
-              <div className="h-96">
-                <ChatInterface match={acceptedMatch} />
+          <div className="flex-1 bg-gray-50 p-4 md:p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full max-h-screen">
+              {/* Chat List */}
+              <div className="lg:col-span-1 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-4 py-4">
+                  <h2 className="text-lg font-bold text-white flex items-center space-x-2">
+                    <MessageCircle size={24} />
+                    <span>{t('chat')}</span>
+                  </h2>
+                </div>
+
+                <div className="flex-1 overflow-y-auto">
+                  {userMatches.filter(m => m.status === 'accepted').length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full p-4 text-center">
+                      <MessageCircle size={40} className="text-gray-300 mb-3" />
+                      <p className="text-gray-500 text-sm">{t('noChatsAvailable')}</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-gray-200">
+                      {userMatches.filter(m => m.status === 'accepted').map((match) => {
+                        const otherUserId = user?.id === match.user1Id ? match.user2Id : match.user1Id;
+                        const otherUserName = getUserNameById(otherUserId);
+                        const isSelected = selectedChatMatch === match.id;
+
+                        return (
+                          <button
+                            key={match.id}
+                            onClick={() => {
+                              setSelectedChatMatch(match.id);
+                              setSelectedChatUserName(otherUserName);
+                            }}
+                            className={`w-full p-4 hover:bg-gray-50 transition-colors text-left border-l-4 ${
+                              isSelected ? 'border-primary-600 bg-gray-50' : 'border-transparent'
+                            }`}
+                          >
+                            <div className="flex items-start space-x-3">
+                              <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <Users size={20} className="text-primary-600" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold text-gray-900 truncate">{otherUserName}</h3>
+                                <p className="text-sm text-gray-500 truncate">{t('online')}</p>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Pending Matches Section */}
+                {userMatches.filter(m => m.status === 'pending').length > 0 && (
+                  <div className="border-t border-gray-200 bg-gray-50 p-4 max-h-32 overflow-y-auto">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                      {t('pending')} ({userMatches.filter(m => m.status === 'pending').length})
+                    </h3>
+                    <div className="space-y-2">
+                      {userMatches.filter(m => m.status === 'pending').map((match) => {
+                        const otherUserId = user?.id === match.user1Id ? match.user2Id : match.user1Id;
+                        const otherUserName = getUserNameById(otherUserId);
+
+                        return (
+                          <div key={match.id} className="flex items-center space-x-2 p-2 bg-white rounded-lg border border-yellow-200">
+                            <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <Users size={16} className="text-yellow-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{otherUserName}</p>
+                              <p className="text-xs text-gray-500 truncate">{t('pending')}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="text-center py-12">
-                <MessageCircle size={48} className="mx-auto text-gray-400 mb-4" />
-                <p className="text-gray-500">{t('noAcceptedMatches')}</p>
+
+              {/* Chat Window */}
+              <div className="hidden lg:block lg:col-span-3">
+                {selectedChatMatch ? (
+                  <ChatInterface
+                    match={userMatches.find(m => m.id === selectedChatMatch)!}
+                    otherUserName={selectedChatUserName}
+                    onBackClick={() => setSelectedChatMatch(null)}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div className="text-center">
+                      <MessageCircle size={64} className="mx-auto text-gray-300 mb-4" />
+                      <p className="text-gray-500 text-lg">{t('selectChat')}</p>
+                      <p className="text-gray-400 text-sm mt-2">{t('noChatSelected')}</p>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+
+              {/* Mobile Chat View */}
+              <div className="lg:hidden col-span-1">
+                {selectedChatMatch ? (
+                  <ChatInterface
+                    match={userMatches.find(m => m.id === selectedChatMatch)!}
+                    otherUserName={selectedChatUserName}
+                    onBackClick={() => setSelectedChatMatch(null)}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-96 bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div className="text-center">
+                      <MessageCircle size={40} className="mx-auto text-gray-300 mb-3" />
+                      <p className="text-gray-500">{t('selectChat')}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         );
       case 'analytics':
@@ -208,7 +341,7 @@ const AppContent: React.FC = () => {
 
   // Resto del código sin cambios...
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col pt-16">
       <Header activeTab={activeTab} onTabChange={setActiveTab} />
       
       <main className="flex-1 flex">

@@ -1,5 +1,7 @@
-import type { Notification } from "../types";
+import type { Notification, Message } from "../types";
 import { eventBus } from "./EventBus";
+import { matchingService } from "./MatchingService";
+import { mockUsers } from "../data/mockData";
 
 class NotificationService {
   private notifications: Map<string, Notification> = new Map();
@@ -61,19 +63,33 @@ class NotificationService {
   }
 
   private async handleNewMessage(event: any) {
-    const message = event.payload.message;
+    const message: Message = event.payload.message;
 
     if (message.type === "system") return;
 
-    // En una app real, aquí obtendríamos el userId del otro participante del match
-    // Por simplicidad, simulamos una notificación genérica
-    await this.createNotification({
-      userId: "user_2", // Usuario simulado
-      title: "Nuevo mensaje",
-      message: "Tienes un nuevo mensaje en el chat.",
-      type: "message",
-      actionUrl: `/chat/${message.matchId}`,
-    });
+    // Obtener el match para saber quién recibe el mensaje
+    try {
+      const match = await matchingService.getMatch(message.matchId);
+      if (!match) return;
+
+      // Determinar quién recibe el mensaje (el que NO lo envió)
+      const recipientId = message.senderId === match.user1Id ? match.user2Id : match.user1Id;
+
+      // Obtener el nombre del usuario que envía el mensaje
+      const senderUser = mockUsers.find(u => u.id === message.senderId);
+      const senderName = senderUser ? senderUser.name : "Usuario";
+
+      // Crear notificación personalizada
+      await this.createNotification({
+        userId: recipientId,
+        title: `Nuevo mensaje de ${senderName}`,
+        message: message.content.substring(0, 50) + (message.content.length > 50 ? '...' : ''),
+        type: "message",
+        actionUrl: `/chat/${message.matchId}`,
+      });
+    } catch (error) {
+      console.error('Error handling new message notification:', error);
+    }
   }
 
   private async handleSecurityAlert(event: any) {

@@ -1,29 +1,13 @@
-import type { Message, Match } from "../types";
-import { eventBus } from "./EventBus";
+import type { Message } from "../types";
 import { securityService } from "./SecurityService";
+import { eventBus } from "./EventBus";
 
 class MessageService {
   private messages: Map<string, Message> = new Map();
   private matchMessages: Map<string, string[]> = new Map(); // matchId -> messageIds
 
   constructor() {
-    this.setupEventListeners();
-  }
-
-  private setupEventListeners() {
-    eventBus.subscribe("MatchAceptado", this.handleMatchAccepted.bind(this));
-  }
-
-  private async handleMatchAccepted(event: any) {
-    const match: Match = event.payload.match;
-
-    // Crear mensaje de bienvenida automático
-    await this.sendMessage({
-      matchId: match.id,
-      senderId: "system",
-      content: "¡Match encontrado! Ahora pueden comenzar a chatear.",
-      type: "system",
-    });
+    // No mock messages: solo intercambio usuario-usuario
   }
 
   async sendMessage(
@@ -31,7 +15,7 @@ class MessageService {
   ): Promise<Message> {
     await this.simulateLatency();
 
-    // Moderación de contenido
+    // Moderación de  contenido
     const moderatedContent = await securityService.moderateContent(
       messageData.content
     );

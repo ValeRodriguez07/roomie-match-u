@@ -1,5 +1,6 @@
 import type { Match, User, Publication } from "../types";
 import { eventBus } from "./EventBus";
+import { messageService } from "./MessageService";
 import { userService } from "./UserService";
 import { publicationService } from "./PublicationService";
 import { mockMatches } from "../data/mockData";
@@ -193,6 +194,20 @@ class MatchingService {
     );
 
     if (existingMatch) {
+      // Si ya existe un match entre las mismas dos personas,
+      // no crear uno nuevo: en su lugar, enviar la nueva "solicitud"
+      // como un mensaje en el chat existente para mantener un solo hilo.
+      try {
+        await messageService.sendMessage({
+          matchId: existingMatch.id,
+          senderId: matchData.user1Id,
+          content: `Nueva solicitud relacionada${matchData.publicationId ? ' (publicación: ' + matchData.publicationId + ')' : ''}`,
+          type: 'text',
+        });
+      } catch (err) {
+        console.error('Error sending request-as-message to existing match:', err);
+      }
+
       return existingMatch;
     }
 
@@ -224,6 +239,48 @@ class MatchingService {
       throw new Error("Match not found");
     }
 
+    // Si ya existe otro match ACCEPTED entre las mismas dos personas,
+    // en lugar de aceptar este match (y crear duplicados), enviamos
+    // la información de la nueva solicitud como un mensaje al chat
+    // del match ya aceptado y marcamos este como 'rejected'.
+    const otherAccepted = Array.from(this.matches.values()).find(
+      (m) =>
+        m.id !== matchId &&
+        ((m.user1Id === match.user1Id && m.user2Id === match.user2Id) ||
+          (m.user1Id === match.user2Id && m.user2Id === match.user1Id)) &&
+        m.status === 'accepted'
+    );
+
+    if (otherAccepted) {
+      try {
+        // Enviamos la nueva solicitud como mensaje al chat existente
+        await messageService.sendMessage({
+          matchId: otherAccepted.id,
+          senderId: match.user2Id, // asumimos que quien acepta es user2 (dueño de la publicación)
+          content: `Solicitud aceptada relacionada${match.publicationId ? ' (publicación: ' + match.publicationId + ')' : ''}`,
+          type: 'text',
+        });
+      } catch (err) {
+        console.error('Error sending acceptance-as-message to existing accepted match:', err);
+      }
+
+      // Marcamos el match actual como rechazado para evitar duplicados
+      match.status = 'rejected';
+      match.updatedAt = new Date();
+      this.matches.set(matchId, match);
+
+      // Publicar evento de match rechazado para mantener consistencia
+      await eventBus.publish({
+        type: 'MatchRechazado',
+        origin: 'MatchingService',
+        destination: 'AnalyticsService',
+        payload: { match },
+      });
+
+      return match;
+    }
+
+    // Si no existe un match aceptado previo, proceder normalmente
     match.status = "accepted";
     match.updatedAt = new Date();
     this.matches.set(matchId, match);

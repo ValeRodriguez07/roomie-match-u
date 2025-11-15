@@ -157,7 +157,7 @@ export const mockMatches: Match[] = [
     user2Id: "user_1", // María (tengo_lugar)
     publicationId: "pub_1", // Habitación de María en Salamanca
     score: 0.85,
-    status: "pending",
+    status: "accepted",
     createdAt: new Date("2024-01-26"),
     updatedAt: new Date("2024-01-26"),
   },
@@ -167,8 +167,18 @@ export const mockMatches: Match[] = [
     user2Id: "user_3", // Ana
     publicationId: "pub_2", // Habitación de Ana en Chamberí
     score: 0.78,
-    status: "pending", 
+    status: "accepted", 
     createdAt: new Date("2024-01-27"),
     updatedAt: new Date("2024-01-27"),
+  },
+  {
+    id: "match_3",
+    user1Id: "user_2", // Carlos
+    user2Id: "user_1", // María
+    publicationId: "pub_3", // Estudio de María en Salamanca
+    score: 0.82,
+    status: "pending",
+    createdAt: new Date("2024-01-28"),
+    updatedAt: new Date("2024-01-28"),
   }
 ];

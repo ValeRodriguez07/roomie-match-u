@@ -5,10 +5,12 @@ import { useApp } from '../context/AppContext';
 interface HeaderProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  onNotificationClick?: (actionUrl?: string, notificationId?: string) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
-  const { user, unreadNotifications, logout, setLanguage, language, t } = useApp();
+  const { user, unreadNotifications, notifications, logout, setLanguage, language, t, markNotificationAsRead } = useApp();
+  const [showNotifications, setShowNotifications] = React.useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -88,17 +90,58 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
             </button>
 
             {/* Notifications */}
-            <button 
-              className="relative p-2 text-gray-600 hover:text-primary-600 transition-colors"
-              title={t('notifications')}
-            >
-              <Bell size={20} />
-              {unreadNotifications > 0 && (
-                <span className="absolute -top-1 -right-1 bg-secondary-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {unreadNotifications}
-                </span>
+            <div className="relative">
+              <button
+                onClick={() => setShowNotifications((s) => !s)}
+                className="relative p-2 text-gray-600 hover:text-primary-600 transition-colors"
+                title={t('notifications')}
+              >
+                <Bell size={20} />
+                {unreadNotifications > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-secondary-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {unreadNotifications}
+                  </span>
+                )}
+              </button>
+
+              {/* Notifications dropdown */}
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-50">
+                  <div className="p-3 border-b border-gray-100 font-semibold">{t('notifications')}</div>
+                  <div className="max-h-64 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="p-4 text-sm text-gray-500">{t('noNotifications')}</div>
+                    ) : (
+                      notifications.map((n) => (
+                        <button
+                          key={n.id}
+                          onClick={async () => {
+                            if (n.actionUrl) {
+                              await markNotificationAsRead(n.id);
+                              const evt = new CustomEvent('app:notificationClick', { detail: { actionUrl: n.actionUrl, notificationId: n.id } });
+                              window.dispatchEvent(evt);
+                              setShowNotifications(false);
+                            }
+                          }}
+                          className={`w-full text-left p-3 hover:bg-gray-50 flex items-start space-x-3 ${n.read ? 'opacity-80' : 'bg-white'}`}
+                        >
+                          <div className="w-10">
+                            <div className={`text-xs px-2 py-1 rounded-full text-white text-center ${n.type === 'message' ? 'bg-primary-600' : n.type === 'match' ? 'bg-green-600' : 'bg-gray-500'}`}>
+                              {n.type === 'message' ? t('newMessage') : n.type === 'match' ? t('matchFound') : n.type}
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-gray-900">{n.title}</div>
+                            <div className="text-xs text-gray-500 truncate">{n.message}</div>
+                            <div className="text-xs text-gray-400 mt-1">{new Date(n.timestamp).toLocaleString()}</div>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
               )}
-            </button>
+            </div>
 
             {/* Messages */}
             <button 
