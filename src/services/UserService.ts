@@ -53,9 +53,11 @@ class UserService {
     const newUser: User = {
       ...userData,
       phone: phoneNormalized,
+      preferredLanguage: (userData as any).preferredLanguage || 'es',
       id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       createdAt: new Date(),
       verified: false,
+      profileComplete: false,
     };
 
     this.users.set(newUser.id, newUser);
@@ -125,6 +127,47 @@ class UserService {
     return user;
   }
 
+  async completeProfile(userId: string, profileData: any): Promise<User> {
+    await this.simulateLatency();
+
+    const user = this.users.get(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Merge all profile data
+    user.profile = {
+      ...user.profile,
+      username: profileData.username,
+      birthday: profileData.birthday,
+      gender: profileData.gender,
+      lifestyle: profileData.lifestyle,
+      profilePhoto: profileData.profilePhoto,
+      ...(profileData.searchingHousing && { searchingHousing: profileData.searchingHousing }),
+      ...(profileData.offeringHousing && { offeringHousing: profileData.offeringHousing }),
+    };
+
+    // Update user type if provided
+    if (profileData.type) {
+      user.type = profileData.type;
+    }
+
+    // Mark profile as complete
+    user.profileComplete = true;
+
+    this.users.set(userId, user);
+
+    // Emit event for profile completion
+    await eventBus.publish({
+      type: "PublicacionCreada",
+      origin: "UserService",
+      destination: "*",
+      payload: { userId, profile: user.profile },
+    });
+
+    return user;
+  }
+
   async updatePreferences(
     userId: string,
     preferences: Partial<UserPreferences>
@@ -150,6 +193,7 @@ class UserService {
   getCurrentUser(): User | null {
     return this.currentUser;
   }
+
 
   async searchUsers(criteria: Partial<UserPreferences>): Promise<User[]> {
     await this.simulateLatency(300); // Búsqueda más lenta

@@ -53,7 +53,7 @@ class MessageService {
     const messages = messageIds
       .map((id) => this.messages.get(id))
       .filter(Boolean) as Message[];
-
+         
     return messages.sort(
       (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
     );

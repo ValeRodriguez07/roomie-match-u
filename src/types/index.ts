@@ -2,11 +2,13 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  preferredLanguage?: "en" | "es";
   username?: string;
   phone?: string;
   acceptedTerms?: boolean;
   type: "busco_lugar" | "tengo_lugar";
   avatar?: string;
+  profileComplete?: boolean;
   preferences: UserPreferences;
   profile: UserProfile;
   createdAt: Date;
@@ -27,12 +29,61 @@ export interface UserPreferences {
 }
 
 export interface UserProfile {
-  age: number;
-  gender: "male" | "female" | "other";
-  occupation: string;
-  description: string;
-  habits: string[];
-  languages: string[];
+  // Screen 1: Identifícate
+  username?: string;
+  birthday?: {
+    day: string;
+    month: string;
+    year: string;
+  };
+  gender?: "male" | "female" | "other";
+  
+  // Screen 2: Tu estilo de vida
+  lifestyle?: {
+    smoking: "yes" | "no";
+    allergies: "yes" | "no";
+    allergiesDescription?: string;
+    pets: "yes" | "no";
+    petTypes?: string;
+    willingToLivePets: "yes" | "no";
+    convivence: "quiet" | "social" | "flexible";
+    schedule: "day" | "night" | "mixed";
+  };
+  
+  // Screen 3: Profile photo
+  profilePhoto?: string;
+  
+  // Screen 4: Role selection (busco_lugar | tengo_lugar)
+  
+  // Screen 5A: If "Busco vivienda"
+  searchingHousing?: {
+    zone: string;
+    numberOfPeople: number;
+    roomType: "individual" | "shared";
+    essentialServices: string[];
+    commonSpaces: string[];
+    moveInDate: "immediate" | "next_month" | "2_3_months";
+  };
+  
+  // Screen 5B: If "Ofrezco vivienda"
+  offeringHousing?: {
+    zone: string;
+    availableRooms: number;
+    pricePerRoom: number;
+    servicesIncluded: string[];
+    commonSpaces: string[];
+    houseRules: string[];
+    petFriendly: boolean;
+    propertyPhotos?: string[];
+    propertyVideo?: string;
+  };
+  
+  // Original fields
+  age?: number;
+  occupation?: string;
+  description?: string;
+  habits?: string[];
+  languages?: string[];
 }
 
 export interface Publication {

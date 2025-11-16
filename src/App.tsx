@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { Header } from './components/Header';
 import { LoginScreen } from './components/LoginScreen';
+import { ProfileBuilder } from './components/ProfileBuilder';
 import { ExploreScreen } from './components/ExploreScreen';
 import { ChatInterface } from './components/ChatInterface';
 import { useMatches } from './hooks/useMatches';
@@ -14,6 +15,34 @@ const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState('explore');
   const [selectedChatMatch, setSelectedChatMatch] = useState<string | null>(null);
   const [selectedChatUserName, setSelectedChatUserName] = useState<string>('');
+  const [showProfileBuilder, setShowProfileBuilder] = useState(false);
+
+  // Check if profile needs to be built
+  useEffect(() => {
+    try {
+      const showOnRegistration = sessionStorage.getItem('showProfileBuilder') === 'true';
+      if (user && !user.profileComplete && showOnRegistration) {
+        setShowProfileBuilder(true);
+      }
+    } catch (err) {
+      if (user && !user.profileComplete) setShowProfileBuilder(true);
+    }
+  }, [user]);
+
+  // Handle profile builder completion
+  useEffect(() => {
+    const handleProfileComplete = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log('Profile data received:', customEvent.detail);
+      // Aquí guardaríamos los datos en la base de datos
+      // Por ahora, simplemente cerramos el profile builder
+      setShowProfileBuilder(false);
+      try { sessionStorage.removeItem('showProfileBuilder'); } catch (e) {}
+    };
+
+    window.addEventListener('profileBuilderComplete', handleProfileComplete);
+    return () => window.removeEventListener('profileBuilderComplete', handleProfileComplete);
+  }, []);
 
   // FUNCIÓN PARA OBTENER EL NOMBRE DEL USUARIO POR ID
   const getUserNameById = (userId: string) => {
@@ -84,6 +113,11 @@ const AppContent: React.FC = () => {
   // Si no hay usuario logueado, renderizar la pantalla de login
   if (!user) {
     return <LoginScreen />;
+  }
+
+  // Show profile builder if profile is incomplete
+  if (showProfileBuilder) {
+    return <ProfileBuilder />;
   }
 
   const renderContent = () => {

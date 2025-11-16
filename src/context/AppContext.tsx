@@ -25,7 +25,8 @@ type AppAction =
   | { type: "SET_LANGUAGE"; payload: "en" | "es" }
   | { type: "SET_COUNTRY"; payload: string }
   | { type: "ADD_NOTIFICATION"; payload: Notification }
-  | { type: "MARK_NOTIFICATION_READ"; payload: string };
+  | { type: "MARK_NOTIFICATION_READ"; payload: string }
+  ;
 
 const initialState: AppState = {
   user: null,
@@ -74,6 +75,7 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
         notifications: updatedNotifications,
         unreadNotifications: updatedUnread,
       };
+    
     default:
       return state;
   }
@@ -116,6 +118,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       const user = await userService.login(email, password);
       if (user) {
         dispatch({ type: "SET_USER", payload: user });
+        // Set language according to user preference if present
+        if ((user as any).preferredLanguage) {
+          dispatch({ type: 'SET_LANGUAGE', payload: (user as any).preferredLanguage });
+        }
       } else {
         dispatch({ type: "SET_ERROR", payload: "Credenciales inválidas" });
       }
@@ -142,8 +148,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const user = await userService.register(userData);
       dispatch({ type: "SET_USER", payload: user });
-    } catch (error) {
-      dispatch({ type: "SET_ERROR", payload: "Error al registrar usuario" });
+      if ((user as any).preferredLanguage) {
+        dispatch({ type: 'SET_LANGUAGE', payload: (user as any).preferredLanguage });
+      }
+    } catch (error: any) {
+      const msg = error && error.message ? error.message : 'Error al registrar usuario';
+      dispatch({ type: "SET_ERROR", payload: msg });
+    } finally {
+      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 

@@ -10,40 +10,38 @@ export const LoginScreen: React.FC = () => {
   const [country, setCountry] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
-  const { login, register, loading, error, t } = useApp();
+  const { login, register, loading, error, t, setLanguage, language } = useApp();
+  const [selectedLanguage, setSelectedLanguage] = useState<typeof language>(language);
 
   // Opciones de ciudades/estados/provincias por país
   const cityOptionsByCountry: Record<string, string[]> = {
-    'España': ['Madrid', 'Barcelona', 'Valencia', 'Sevilla', 'Bilbao'],
-    'México': ['CDMX', 'Jalisco', 'Nuevo León', 'Puebla', 'Guanajuato'],
-    'Argentina': ['Buenos Aires', 'Córdoba', 'Mendoza', 'Santa Fe', 'Salta'],
-    'Colombia': ['Bogotá', 'Antioquia', 'Valle del Cauca', 'Cundinamarca', 'Santander'],
-    'Chile': ['Santiago', 'Valparaíso', 'Biobío', 'Maule', 'Araucanía'],
-    'Perú': ['Lima', 'Arequipa', 'Cusco', 'La Libertad', 'Piura'],
-    'Estados Unidos': ['California', 'Texas', 'Florida', 'Nueva York', 'Illinois'],
-    'Brasil': ['São Paulo', 'Rio de Janeiro', 'Bahia', 'Minas Gerais', 'Paraná'],
-    'Italia': ['Roma', 'Milán', 'Nápoles', 'Turín', 'Palermo'],
-    'Francia': ['París', 'Lyon', 'Marsella', 'Toulouse', 'Niza'],
-    'Alemania': ['Berlín', 'Múnich', 'Hamburgo', 'Colonia', 'Frankfurt'],
-    'Venezuela': ['Caracas', 'Zulia', 'Miranda', 'Lara', 'Carabobo'],
-    'Uruguay': ['Montevideo', 'Canelones', 'Maldonado', 'Salto', 'Paysandú'],
-    'Ecuador': ['Quito', 'Guayaquil', 'Cuenca', 'Manabí', 'Azuay'],
-    'Bolivia': ['La Paz', 'Santa Cruz', 'Cochabamba', 'Oruro', 'Tarija'],
-    'Paraguay': ['Asunción', 'Central', 'Alto Paraná', 'Itapúa', 'Caaguazú'],
-    'Guatemala': ['Guatemala', 'Quetzaltenango', 'Escuintla', 'Sacatepéquez', 'Huehuetenango'],
-    'Honduras': ['Tegucigalpa', 'San Pedro Sula', 'Cortés', 'Atlántida', 'Yoro'],
-    'El Salvador': ['San Salvador', 'Santa Ana', 'La Libertad', 'San Miguel', 'Sonsonate'],
-    'Costa Rica': ['San José', 'Alajuela', 'Cartago', 'Heredia', 'Puntarenas'],
-    'Panamá': ['Panamá', 'Colón', 'Chiriquí', 'Veraguas', 'Coclé'],
-    'Puerto Rico': ['San Juan', 'Bayamón', 'Carolina', 'Ponce', 'Caguas'],
-    'Canadá': ['Ontario', 'Quebec', 'Columbia Británica', 'Alberta', 'Manitoba'],
-    'Reino Unido': ['Londres', 'Manchester', 'Birmingham', 'Liverpool', 'Leeds'],
-    'Australia': ['Nueva Gales del Sur', 'Victoria', 'Queensland', 'Australia Occidental', 'Australia Meridional'],
-    'Japón': ['Tokio', 'Osaka', 'Kioto', 'Hokkaido', 'Fukuoka'],
-    'China': ['Pekín', 'Shanghái', 'Cantón', 'Shenzhen', 'Chongqing'],
-    'India': ['Delhi', 'Maharashtra', 'Karnataka', 'Tamil Nadu', 'Gujarat'],
-    'Rusia': ['Moscú', 'San Petersburgo', 'Novosibirsk', 'Ekaterimburgo', 'Nizhni Nóvgorod'],
-    'Sudáfrica': ['Gauteng', 'Cabo Occidental', 'KwaZulu-Natal', 'Cabo Oriental', 'Estado Libre'],
+    'España': ['Madrid', 'Barcelona', 'Valencia', 'Sevilla', 'Bilbao', 'Zaragoza', 'Málaga', 'Murcia', 'Palma', 'Las Palmas'],
+    'México': ['CDMX', 'Guadalajara', 'Monterrey', 'Puebla', 'Mérida', 'Tijuana', 'León', 'Querétaro', 'Cancún', 'Toluca', 'Chiapas', 'Morelia', 'Zacatecas', 'Aguascalientes'],
+    'Argentina': ['Buenos Aires', 'Córdoba', 'Rosario', 'Mendoza', 'La Plata', 'Mar del Plata', 'Salta', 'San Miguel de Tucumán', 'Neuquén', 'Bahía Blanca', 'Resistencia'],
+    'Colombia': ['Bogotá', 'Medellín', 'Cali', 'Barranquilla', 'Cartagena', 'Bucaramanga', 'Pereira', 'Manizales', 'Ibagué', 'Santa Marta', 'Cúcuta'],
+    'Chile': ['Santiago', 'Valparaíso', 'Viña del Mar', 'Concepción', 'Antofagasta', 'La Serena', 'Temuco', 'Iquique', 'Rancagua', 'Talca'],
+    'Perú': ['Lima', 'Arequipa', 'Cusco', 'Trujillo', 'Chiclayo', 'Piura', 'Iquitos', 'Huancayo', 'Puno', 'Tacna'],
+    'Estados Unidos': ['Miami', 'Orlando', 'Tampa', 'Los Angeles', 'San Francisco', 'San Diego', 'Houston', 'Dallas', 'Austin', 'New York', 'Chicago', 'Seattle', 'Atlanta'],
+    'Brasil': ['São Paulo', 'Rio de Janeiro', 'Brasília', 'Salvador', 'Fortaleza', 'Belo Horizonte', 'Curitiba', 'Manaus', 'Recife', 'Porto Alegre'],
+    'Italia': ['Roma', 'Milán', 'Nápoles', 'Turín', 'Palermo', 'Boloña', 'Florencia', 'Génova', 'Venecia', 'Verona'],
+    'Francia': ['París', 'Lyon', 'Marsella', 'Toulouse', 'Niza', 'Nantes', 'Estrasburgo', 'Montpellier', 'Burdeos', 'Lille'],
+    'Alemania': ['Berlín', 'Múnich', 'Hamburgo', 'Colonia', 'Frankfurt', 'Stuttgart', 'Düsseldorf', 'Leipzig', 'Dortmund', 'Essen', 'Bremen'],
+    'Venezuela': ['Caracas', 'Maracaibo', 'Valencia', 'Barquisimeto', 'Maracay', 'Maturín', 'Ciudad Guayana', 'Puerto La Cruz', 'San Cristóbal'],
+    'Uruguay': ['Montevideo', 'Canelones', 'Maldonado', 'Paysandú', 'Salto', 'Rivera', 'Colonia'],
+    'Ecuador': ['Quito', 'Guayaquil', 'Cuenca', 'Manta', 'Portoviejo', 'Santo Domingo', 'Ambato', 'Machala'],
+    'Bolivia': ['La Paz', 'Santa Cruz', 'Cochabamba', 'Sucre', 'Oruro', 'Potosí', 'Tarija', 'El Alto'],
+    'Paraguay': ['Asunción', 'Ciudad del Este', 'San Lorenzo', 'Luque', 'Encarnación', 'Fernando de la Mora'],
+    'Guatemala': ['Guatemala City', 'Quetzaltenango', 'Escuintla', 'Huehuetenango', 'Antigua Guatemala', 'Chimaltenango'],
+    'Honduras': ['Tegucigalpa', 'San Pedro Sula', 'Choloma', 'La Ceiba', 'Comayagua', 'El Progreso'],
+    'El Salvador': ['San Salvador', 'Santa Ana', 'San Miguel', 'La Libertad', 'Sonsonate', 'Soyapango'],
+    'Canadá': ['Toronto', 'Ottawa', 'Vancouver', 'Montreal', 'Calgary', 'Edmonton'],
+    'Reino Unido': ['Londres', 'Manchester', 'Birmingham', 'Liverpool', 'Leeds', 'Glasgow', 'Edimburgo'],
+    'Australia': ['Sydney', 'Melbourne', 'Brisbane', 'Perth', 'Adelaide'],
+    'Japón': ['Tokio', 'Osaka', 'Yokohama', 'Nagoya', 'Sapporo', 'Fukuoka', 'Kobe', 'Kyoto', 'Kawasaki'],
+    'China': ['Pekín', 'Shanghái', 'Guangzhou', 'Shenzhen', 'Chongqing', 'Tianjin'],
+    'India': ['Delhi', 'Mumbai', 'Bangalore', 'Chennai', 'Hyderabad', 'Ahmedabad'],
+    'Rusia': ['Moscú', 'San Petersburgo', 'Novosibirsk', 'Ekaterimburgo', 'Nizhni Nóvgorod', 'Kazan', 'Chelyabinsk', 'Omsk', 'Samara'],
+    'Sudáfrica': ['Johannesburgo', 'Ciudad del Cabo', 'Durban', 'Pretoria', 'Port Elizabeth'],
   };
   const cityOptions = cityOptionsByCountry[country] || [];
 
@@ -51,12 +49,13 @@ export const LoginScreen: React.FC = () => {
     e.preventDefault();
     if (isRegistering) {
       if (!acceptedTerms) {
-        alert('Debes aceptar los términos y condiciones');
+        alert(t('mustAcceptTerms'));
         return;
       }
       await register({
         email,
         username,
+        preferredLanguage: selectedLanguage,
         phone,
         acceptedTerms,
         password,
@@ -82,7 +81,17 @@ export const LoginScreen: React.FC = () => {
           languages: ['español']
         }
       });
+      // Mark that the profile builder should be shown for this new registration
+      try {
+        sessionStorage.setItem('showProfileBuilder', 'true');
+      } catch (err) {
+        // ignore storage errors
+      }
     } else {
+      // Existing users should go straight to home; ensure the flag is cleared
+      try {
+        sessionStorage.setItem('showProfileBuilder', 'false');
+      } catch (err) {}
       await login(email, password);
     }
   };
@@ -111,8 +120,35 @@ export const LoginScreen: React.FC = () => {
           {isRegistering && (
             <>
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('languageLabel')}</label>
+                <div className="flex space-x-3">
+                  <label className={`px-3 py-2 rounded-lg border ${selectedLanguage === 'es' ? 'bg-primary-600 text-white' : 'bg-white'}`}>
+                    <input
+                      type="radio"
+                      name="language"
+                      value="es"
+                      checked={selectedLanguage === 'es'}
+                      onChange={() => { setSelectedLanguage('es'); setLanguage('es'); }}
+                      className="hidden"
+                    />
+                    {t('spanish')}
+                  </label>
+                  <label className={`px-3 py-2 rounded-lg border ${selectedLanguage === 'en' ? 'bg-primary-600 text-white' : 'bg-white'}`}>
+                    <input
+                      type="radio"
+                      name="language"
+                      value="en"
+                      checked={selectedLanguage === 'en'}
+                      onChange={() => { setSelectedLanguage('en'); setLanguage('en'); }}
+                      className="hidden"
+                    />
+                    {t('english')}
+                  </label>
+                </div>
+              </div>
+              <div>
                 <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                  Nombre de usuario
+                  {t('username')}
                 </label>
                 <input
                   id="username"
@@ -122,12 +158,12 @@ export const LoginScreen: React.FC = () => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                  placeholder="Nombre de usuario"
+                  placeholder={t('usernamePlaceholder')}
                 />
               </div>
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                  Teléfono
+                  {t('phone')}
                 </label>
                 <input
                   id="phone"
@@ -137,12 +173,12 @@ export const LoginScreen: React.FC = () => {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                  placeholder="Teléfono"
+                  placeholder={t('phonePlaceholder')}
                 />
               </div>
               <div>
                 <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
-                  País
+                  {t('countryLabel')}
                 </label>
                 <input
                   id="country"
@@ -155,7 +191,7 @@ export const LoginScreen: React.FC = () => {
                     setCity(''); // Limpiar ciudad al cambiar país
                   }}
                   className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                  placeholder="País (Ej: España, México, Argentina, Colombia, Chile, Perú, Estados Unidos, Brasil, Italia, Francia, Alemania, Venezuela, Uruguay, Ecuador)"
+                  placeholder={t('countryPlaceholder')}
                   list="country-list"
                 />
                 <datalist id="country-list">
@@ -193,7 +229,7 @@ export const LoginScreen: React.FC = () => {
               </div>
               <div>
                 <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
-                  Ciudad/Estado/Provincia
+                  {t('citySelectPrompt')}
                 </label>
                 <select
                   id="city"
@@ -204,7 +240,7 @@ export const LoginScreen: React.FC = () => {
                   className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
                   disabled={!country || cityOptions.length === 0}
                 >
-                  <option value="">{country ? 'Selecciona una opción' : 'Selecciona primero un país'}</option>
+                  <option value="">{country ? t('selectOption') : t('selectCountryFirst')}</option>
                   {cityOptions.map((opt) => (
                     <option key={opt} value={opt}>{opt}</option>
                   ))}
@@ -257,7 +293,7 @@ export const LoginScreen: React.FC = () => {
                 required
               />
               <label htmlFor="acceptedTerms" className="ml-2 block text-sm text-gray-700">
-                Acepto los <a href="#" className="text-primary-600 underline">términos y condiciones</a>
+                {t('acceptTerms')}
               </label>
             </div>
           )}
