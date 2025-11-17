@@ -6,9 +6,10 @@ interface HeaderProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onNotificationClick?: (actionUrl?: string, notificationId?: string) => void;
+  userType?: 'busco_lugar' | 'tengo_lugar';
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
+export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange, userType }) => {
   const { user, unreadNotifications, notifications, logout, setLanguage, language, t, markNotificationAsRead } = useApp();
   const [showNotifications, setShowNotifications] = React.useState(false);
 
@@ -37,16 +38,32 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
 
           {/* Navigation - Desktop */}
           <nav className="hidden md:flex space-x-8">
-            <button
-              onClick={() => onTabChange('explore')}
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'explore'
-                  ? 'text-primary-600 bg-primary-50'
-                  : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
-              }`}
-            >
-              {t('explore')}
-            </button>
+            {userType === 'busco_lugar' && (
+              <button
+                onClick={() => onTabChange('explore')}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === 'explore'
+                    ? 'text-primary-600 bg-primary-50'
+                    : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
+                }`}
+              >
+                {t('explore')}
+              </button>
+            )}
+
+            {userType === 'tengo_lugar' && (
+              <button
+                onClick={() => onTabChange('publications')}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === 'publications'
+                    ? 'text-primary-600 bg-primary-50'
+                    : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
+                }`}
+              >
+                {t('publications')}
+              </button>
+            )}
+
             <button
               onClick={() => onTabChange('matches')}
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${

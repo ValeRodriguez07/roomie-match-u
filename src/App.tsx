@@ -13,7 +13,7 @@ import { mockUsers } from './data/mockData'; // AGREGAR ESTA IMPORTACIÓN
 const AppContent: React.FC = () => {
   const { user, t } = useApp();
   const { matches, acceptMatch, rejectMatch } = useMatches();
-  const [activeTab, setActiveTab] = useState('explore');
+  const [activeTab, setActiveTab] = useState<string>('explore');
   const [selectedChatMatch, setSelectedChatMatch] = useState<string | null>(null);
   const [selectedChatUserName, setSelectedChatUserName] = useState<string>('');
   const [showProfileBuilder, setShowProfileBuilder] = useState(false);
@@ -40,13 +40,15 @@ const AppContent: React.FC = () => {
       // Por ahora, simplemente cerramos el profile builder
       setShowProfileBuilder(false);
       setIsEditingProfile(false);
-      setActiveTab('explore');
+      // Redirect to role-appropriate main screen
+      const roleBasedTab = user?.type === 'tengo_lugar' ? 'publications' : 'explore';
+      setActiveTab(roleBasedTab);
       try { sessionStorage.removeItem('showProfileBuilder'); } catch (e) {}
     };
 
     window.addEventListener('profileBuilderComplete', handleProfileComplete);
     return () => window.removeEventListener('profileBuilderComplete', handleProfileComplete);
-  }, []);
+  }, [user]);
 
   // FUNCIÓN PARA OBTENER EL NOMBRE DEL USUARIO POR ID
   const getUserNameById = (userId: string) => {
@@ -127,15 +129,15 @@ const AppContent: React.FC = () => {
   // Show profile view
   if (activeTab === 'profile') {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        <Header activeTab={activeTab} onTabChange={setActiveTab} />
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Header activeTab={activeTab} onTabChange={setActiveTab} userType={user?.type} />
         <div className="flex-1 pt-16">
           <ProfileView
             onEditClick={() => {
               setIsEditingProfile(true);
               setShowProfileBuilder(true);
             }}
-            onClose={() => setActiveTab('explore')}
+            onClose={() => setActiveTab(user?.type === 'tengo_lugar' ? 'publications' : 'explore')}
           />
         </div>
       </div>
@@ -145,7 +147,9 @@ const AppContent: React.FC = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'explore':
-        return <ExploreScreen />;
+        return user?.type === 'busco_lugar' ? <ExploreScreen /> : null;
+      case 'publications':
+        return user?.type === 'tengo_lugar' ? <ExploreScreen /> : null;
       case 'matches':
         return (
           <div className="flex-1 bg-gray-50 p-6">
@@ -398,24 +402,40 @@ const AppContent: React.FC = () => {
   // Resto del código sin cambios...
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col pt-16">
-      <Header activeTab={activeTab} onTabChange={setActiveTab} />
+      <Header activeTab={activeTab} onTabChange={setActiveTab} userType={user?.type} />
       
       <main className="flex-1 flex">
         {/* Sidebar - Desktop */}
         <div className="w-64 bg-white shadow-sm border-r border-gray-200 hidden md:block">
           <nav className="p-4 space-y-2">
-            <button
-              onClick={() => setActiveTab('explore')}
-              className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
-                activeTab === 'explore'
-                  ? 'bg-primary-50 text-primary-700 border border-primary-200'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <Home size={20} />
-              <span>{t('explore')}</span>
-            </button>
-            
+            {user?.type === 'busco_lugar' && (
+              <button
+                onClick={() => setActiveTab('explore')}
+                className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+                  activeTab === 'explore'
+                    ? 'bg-primary-50 text-primary-700 border border-primary-200'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <Home size={20} />
+                <span>{t('explore')}</span>
+              </button>
+            )}
+
+            {user?.type === 'tengo_lugar' && (
+              <button
+                onClick={() => setActiveTab('publications')}
+                className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+                  activeTab === 'publications'
+                    ? 'bg-primary-50 text-primary-700 border border-primary-200'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <Home size={20} />
+                <span>{t('publications')}</span>
+              </button>
+            )}
+
             <button
               onClick={() => setActiveTab('matches')}
               className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
@@ -427,7 +447,7 @@ const AppContent: React.FC = () => {
               <Users size={20} />
               <span>{t('matches')}</span>
             </button>
-            
+
             <button
               onClick={() => setActiveTab('chat')}
               className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
@@ -439,7 +459,7 @@ const AppContent: React.FC = () => {
               <MessageCircle size={20} />
               <span>{t('chat')}</span>
             </button>
-            
+
             <button
               onClick={() => setActiveTab('analytics')}
               className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
@@ -463,16 +483,30 @@ const AppContent: React.FC = () => {
       {/* Mobile Bottom Navigation - FIXED */}
       <div className="md:hidden bg-white border-t border-gray-200 fixed bottom-0 left-0 right-0 z-40">
         <div className="flex justify-around items-center h-16">
-          <button
-            onClick={() => setActiveTab('explore')}
-            className={`flex flex-col items-center p-2 flex-1 ${
-              activeTab === 'explore' ? 'text-primary-600' : 'text-gray-600'
-            }`}
-          >
-            <Home size={20} />
-            <span className="text-xs mt-1">{t('explore')}</span>
-          </button>
-          
+          {user?.type === 'busco_lugar' && (
+            <button
+              onClick={() => setActiveTab('explore')}
+              className={`flex flex-col items-center p-2 flex-1 ${
+                activeTab === 'explore' ? 'text-primary-600' : 'text-gray-600'
+              }`}
+            >
+              <Home size={20} />
+              <span className="text-xs mt-1">{t('explore')}</span>
+            </button>
+          )}
+
+          {user?.type === 'tengo_lugar' && (
+            <button
+              onClick={() => setActiveTab('publications')}
+              className={`flex flex-col items-center p-2 flex-1 ${
+                activeTab === 'publications' ? 'text-primary-600' : 'text-gray-600'
+              }`}
+            >
+              <Home size={20} />
+              <span className="text-xs mt-1">{t('publications')}</span>
+            </button>
+          )}
+
           <button
             onClick={() => setActiveTab('matches')}
             className={`flex flex-col items-center p-2 flex-1 ${
@@ -482,7 +516,7 @@ const AppContent: React.FC = () => {
             <Users size={20} />
             <span className="text-xs mt-1">{t('matches')}</span>
           </button>
-          
+
           <button
             onClick={() => setActiveTab('chat')}
             className={`flex flex-col items-center p-2 flex-1 ${
@@ -492,7 +526,7 @@ const AppContent: React.FC = () => {
             <MessageCircle size={20} />
             <span className="text-xs mt-1">{t('chat')}</span>
           </button>
-          
+
           <button
             onClick={() => setActiveTab('analytics')}
             className={`flex flex-col items-center p-2 flex-1 ${
