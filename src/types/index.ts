@@ -13,6 +13,7 @@ export interface User {
   profile: UserProfile;
   createdAt: Date;
   verified: boolean;
+  currency?: string;
 }
 
 export interface UserPreferences {
@@ -92,6 +93,7 @@ export interface Publication {
   title: string;
   description: string;
   price: number;
+  currency: string;
   location: string;
   city: string;
   country: string;
@@ -164,3 +166,35 @@ export interface AnalyticsData {
   securityAlerts: number;
   userEngagement: number;
 }
+
+export type SupportedCurrency = "COP" | "EUR" | "USD" | "MXN" | "ARS" | "CLP" | "PEN" | "BRL" | "GBP" | "CAD" | "AUD" | "JPY" | "CNY" | "INR" | "RUB" | "ZAR" | "UYU" | "BOB" | "PYG" | "GTQ" | "HNL";
+
+export const CURRENCY_OPTIONS: Record<string, SupportedCurrency[]> = {
+  'Colombia': ['COP', 'USD'],
+  'España': ['EUR', 'USD'],
+  'Estados Unidos': ['USD', 'EUR'],
+  'México': ['MXN', 'USD'],
+  'Argentina': ['ARS', 'USD'],
+  'Chile': ['CLP', 'USD'],
+  'Perú': ['PEN', 'USD'],
+  'Brasil': ['BRL', 'USD'],
+  'Italia': ['EUR', 'USD'],
+  'Francia': ['EUR', 'USD'],
+  'Alemania': ['EUR', 'USD'],
+  'Venezuela': ['USD'],
+  'Uruguay': ['UYU', 'USD'],
+  'Ecuador': ['USD'],
+  'Bolivia': ['BOB', 'USD'],
+  'Paraguay': ['PYG', 'USD'],
+  'Guatemala': ['GTQ', 'USD'],
+  'Honduras': ['HNL', 'USD'],
+  'El Salvador': ['USD'],
+  'Canadá': ['CAD', 'USD'],
+  'Reino Unido': ['GBP', 'USD'],
+  'Australia': ['AUD', 'USD'],
+  'Japón': ['JPY', 'USD'],
+  'China': ['CNY', 'USD'],
+  'India': ['INR', 'USD'],
+  'Rusia': ['RUB', 'USD'],
+  'Sudáfrica': ['ZAR', 'USD'],
+};

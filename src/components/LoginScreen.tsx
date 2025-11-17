@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { CURRENCY_OPTIONS } from '../types';
+import { getDefaultCurrencyForCountry } from '../utils/currency';
 
 export const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -12,6 +14,7 @@ export const LoginScreen: React.FC = () => {
   const [isRegistering, setIsRegistering] = useState(false);
   const { login, register, loading, error, t, setLanguage, language } = useApp();
   const [selectedLanguage, setSelectedLanguage] = useState<typeof language>(language);
+  const [currency, setCurrency] = useState('');
 
   // Opciones de ciudades/estados/provincias por país
   const cityOptionsByCountry: Record<string, string[]> = {
@@ -45,6 +48,14 @@ export const LoginScreen: React.FC = () => {
   };
   const cityOptions = cityOptionsByCountry[country] || [];
 
+  // Set default currency when country changes
+  useEffect(() => {
+    if (country) {
+      const defaultCurrency = getDefaultCurrencyForCountry(country);
+      setCurrency(defaultCurrency);
+    }
+  }, [country]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isRegistering) {
@@ -60,6 +71,7 @@ export const LoginScreen: React.FC = () => {
         acceptedTerms,
         password,
         type: 'busco_lugar',
+        currency,
         preferences: {
           maxPrice: 500,
           minPrice: 300,

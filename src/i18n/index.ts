@@ -196,6 +196,7 @@ export const translations = {
     lifestyle: "Lifestyle",
     housingSearch: "Housing Search",
     housingOffer: "Housing Offer",
+    publications: "Publications",
   },
   es: {
     welcome: "Bienvenido a Roomie Match U",
@@ -395,6 +396,9 @@ export const translations = {
     lifestyle: "Estilo de Vida",
     housingSearch: "Búsqueda de Vivienda",
     housingOffer: "Oferta de Vivienda",
+    publications: "Publicaciones",
+    currency: "Moneda",
+    selectCurrency: "Seleccionar Moneda",
   }
 };
 

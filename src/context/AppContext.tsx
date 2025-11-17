@@ -15,6 +15,7 @@ interface AppState {
   error: string | null;
   language: "en" | "es";
   country: string;
+  selectedCurrency: string;
 }
 
 type AppAction =
@@ -24,6 +25,7 @@ type AppAction =
   | { type: "SET_NOTIFICATIONS"; payload: Notification[] }
   | { type: "SET_LANGUAGE"; payload: "en" | "es" }
   | { type: "SET_COUNTRY"; payload: string }
+  | { type: "SET_CURRENCY"; payload: string }
   | { type: "ADD_NOTIFICATION"; payload: Notification }
   | { type: "MARK_NOTIFICATION_READ"; payload: string }
   ;
@@ -36,6 +38,7 @@ const initialState: AppState = {
   error: null,
   language: "es",
   country: "ES",
+  selectedCurrency: "USD",
 };
 
 const appReducer = (state: AppState, action: AppAction): AppState => {
@@ -54,6 +57,8 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
       return { ...state, language: action.payload };
     case "SET_COUNTRY":
       return { ...state, country: action.payload };
+    case "SET_CURRENCY":
+      return { ...state, selectedCurrency: action.payload };
     case "ADD_NOTIFICATION":
       const newNotifications = [action.payload, ...state.notifications];
       const newUnread =
@@ -75,7 +80,7 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
         notifications: updatedNotifications,
         unreadNotifications: updatedUnread,
       };
-    
+
     default:
       return state;
   }
@@ -90,6 +95,7 @@ interface AppContextType extends AppState {
   markAllNotificationsAsRead: () => Promise<void>;
   setLanguage: (language: "en" | "es") => void;
   setCountry: (country: string) => void;
+  setCurrency: (currency: string) => void;
   t: (key: keyof typeof translations['en']) => string; // Nueva función de traducción
 }
 
@@ -203,6 +209,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     dispatch({ type: "SET_COUNTRY", payload: country });
   };
 
+  const setCurrency = (currency: string) => {
+    dispatch({ type: "SET_CURRENCY", payload: currency });
+  };
+
   const value: AppContextType = {
     ...state,
     login,
@@ -213,6 +223,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     markAllNotificationsAsRead,
     setLanguage,
     setCountry,
+    setCurrency,
     t // Añadimos la función de traducción
   };
 

@@ -2,6 +2,7 @@ import React from "react";
 import { MapPin, DollarSign, Users, Calendar } from "lucide-react";
 import type { Publication } from "../types";
 import { useApp } from "../context/AppContext";
+import { convertCurrency, formatCurrency } from "../utils/currency";
 
 interface PublicationCardProps {
   publication: Publication;
@@ -16,7 +17,7 @@ export const PublicationCard: React.FC<PublicationCardProps> = ({
   onDislike,
   showActions = true,
 }) => {
-  const { t, language } = useApp();
+  const { t, language, selectedCurrency } = useApp();
 
   const roomTypeLabels = {
     single: t("single"),
@@ -25,10 +26,8 @@ export const PublicationCard: React.FC<PublicationCardProps> = ({
   };
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat(language === "es" ? "es-ES" : "en-US", {
-      style: "currency",
-      currency: language === "es" ? "EUR" : "USD",
-    }).format(price);
+    const convertedPrice = convertCurrency(price, publication.currency, selectedCurrency);
+    return formatCurrency(convertedPrice, selectedCurrency, language);
   };
 
   const formatDate = (date: Date) => {
@@ -41,7 +40,15 @@ export const PublicationCard: React.FC<PublicationCardProps> = ({
     <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow">
       {/* Image */}
       <div className="h-48 bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center">
-        <Users size={48} className="text-primary-500 opacity-50" />
+        {publication.images && publication.images.length > 0 ? (
+          <img
+            src={publication.images[0]}
+            alt={publication.title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <Users size={48} className="text-primary-500 opacity-50" />
+        )}
       </div>
 
       {/* Content */}

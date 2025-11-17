@@ -1,36 +1,42 @@
-# Role-Based Navigation and Main Screens Implementation
+# Currency Integration TODO
 
-## Tasks to Complete
+## 1. Update Type Definitions
+- [ ] Add currency field to UserPreferences interface
+- [ ] Add currency field to User interface
+- [ ] Add currency field to Publication interface
+- [ ] Define supported currencies type
 
-### 1. Modify App.tsx
-- [ ] Add role-based tab configuration (seekers: explore, matches, chat, analytics; offerers: publications, matches, chat, analytics)
-- [ ] Update profile completion handler to redirect to role-appropriate main screen
-- [ ] Implement role-based main screen rendering
+## 2. Update Registration Process
+- [ ] Add currency selection to LoginScreen registration form
+- [ ] Update user registration logic to include currency
+- [ ] Add currency options for all countries in the app
 
-### 2. Convert ExploreScreen to RoleBasedMainScreen
-- [ ] For seekers: Implement Tinder-like card stack with scroll detection and paywall (6 views limit)
-- [ ] For offerers: Show publication management interface with paywall (2 publications limit)
-- [ ] Add scroll detection logic for card swiping
+## 3. Add Currency Selector to Header
+- [ ] Add currency dropdown to Header component
+- [ ] Implement currency change handler
+- [ ] Store selected currency in app context
 
-### 3. Implement Paywall System
-- [ ] Track view counts for seekers (6 free views)
-- [ ] Track publication count for offerers (2 free publications)
-- [ ] Show paywall UI when limits reached
+## 4. Create Currency Conversion Service
+- [ ] Create currency conversion utility/service
+- [ ] Add exchange rates for supported currencies
+- [ ] Implement conversion functions
 
-### 4. Update Navigation Components
-- [ ] Modify Header.tsx for role-based desktop navigation
-- [ ] Update mobile bottom navigation to reflect role-based tabs
+## 5. Update Price Display Components
+- [ ] Update PublicationCard to show prices in selected currency
+- [ ] Update TinderCard to show prices in selected currency
+- [ ] Update ProfileBuilder to handle currency in price fields
+- [ ] Update ExploreScreen price displays
 
-### 5. Add Publication Management for Offerers
-- [ ] Create publication creation/editing interface
-- [ ] Integrate with usePublications hook
+## 6. Update Mock Data
+- [ ] Add currency fields to mock users
+- [ ] Add currency fields to mock publications
+- [ ] Ensure all price displays work with conversion
 
-### 6. Ensure Responsive Behavior
-- [ ] Test mobile/desktop navigation
-- [ ] Verify card interface works on different screen sizes
+## 7. Update Translations
+- [ ] Add currency-related translations
+- [ ] Add currency symbols and names
 
-## Followup Steps
-- [ ] Test profile completion flow redirects correctly
-- [ ] Verify paywall logic works
-- [ ] Test responsive navigation on mobile/desktop
-- [ ] Ensure publication management works for offerers
+## 8. Testing
+- [ ] Test currency conversion accuracy
+- [ ] Test currency switching in all components
+- [ ] Test registration with currency selection
