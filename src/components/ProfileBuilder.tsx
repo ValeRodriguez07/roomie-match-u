@@ -4,13 +4,17 @@ import { Upload, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getNeighborhoodsByCity } from '../data/neighborhoods';
 import { userService } from '../services/UserService';
 
-export const ProfileBuilder: React.FC = () => {
+interface ProfileBuilderProps {
+  isEditing?: boolean;
+}
+
+export const ProfileBuilder: React.FC<ProfileBuilderProps> = ({ isEditing = false }) => {
   const { t, user } = useApp();
   const [currentStep, setCurrentStep] = useState(1);
   const [neighborhoods, setNeighborhoods] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     // Step 1: Identifícate - start empty/unset
-    username: user?.username || '',
+    username: '',
     birthday: { day: '', month: '', year: '' },
     gender: '',
 
@@ -61,6 +65,54 @@ export const ProfileBuilder: React.FC = () => {
       setNeighborhoods(availableNeighborhoods);
     }
   }, [user?.preferences?.city]);
+
+  // Initialize form data with existing profile data if editing
+  useEffect(() => {
+    if (isEditing && user?.profile) {
+      const profile = user.profile;
+      setFormData({
+        // Step 1: Identifícate
+        username: profile.username || user.username || '',
+        birthday: profile.birthday || { day: '', month: '', year: '' },
+        gender: profile.gender || '',
+
+        // Step 2: Estilo de vida
+        smoking: profile.lifestyle?.smoking || '',
+        allergies: profile.lifestyle?.allergies || '',
+        allergiesDescription: profile.lifestyle?.allergiesDescription || '',
+        pets: profile.lifestyle?.pets || '',
+        petTypes: profile.lifestyle?.petTypes || '',
+        willingToLivePets: profile.lifestyle?.willingToLivePets || '',
+        convivence: profile.lifestyle?.convivence || '',
+        schedule: profile.lifestyle?.schedule || '',
+
+        // Step 3: Foto
+        profilePhoto: profile.profilePhoto || '',
+
+        // Step 4: Rol
+        role: user.type || '',
+
+        // Step 5A: Busco vivienda
+        zone: profile.searchingHousing?.zone || '',
+        numberOfPeople: profile.searchingHousing?.numberOfPeople?.toString() || '',
+        roomType: profile.searchingHousing?.roomType || '',
+        essentialServices: profile.searchingHousing?.essentialServices || [],
+        moveInDate: profile.searchingHousing?.moveInDate || '',
+
+        // Step 5B: Ofrezco vivienda
+        zoneOffer: profile.offeringHousing?.zone || '',
+        availableRooms: profile.offeringHousing?.availableRooms?.toString() || '',
+        pricePerRoom: profile.offeringHousing?.pricePerRoom?.toString() || '',
+        servicesIncluded: profile.offeringHousing?.servicesIncluded || [],
+        houseRules: profile.offeringHousing?.houseRules || [],
+        petFriendly: profile.offeringHousing?.petFriendly || false,
+
+        // Step 6: Media
+        propertyPhotos: profile.offeringHousing?.propertyPhotos || [],
+        propertyVideo: profile.offeringHousing?.propertyVideo || '',
+      });
+    }
+  }, [isEditing, user]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;

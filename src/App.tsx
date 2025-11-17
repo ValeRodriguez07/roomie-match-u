@@ -3,6 +3,7 @@ import { AppProvider, useApp } from './context/AppContext';
 import { Header } from './components/Header';
 import { LoginScreen } from './components/LoginScreen';
 import { ProfileBuilder } from './components/ProfileBuilder';
+import { ProfileView } from './components/ProfileView';
 import { ExploreScreen } from './components/ExploreScreen';
 import { ChatInterface } from './components/ChatInterface';
 import { useMatches } from './hooks/useMatches';
@@ -16,6 +17,7 @@ const AppContent: React.FC = () => {
   const [selectedChatMatch, setSelectedChatMatch] = useState<string | null>(null);
   const [selectedChatUserName, setSelectedChatUserName] = useState<string>('');
   const [showProfileBuilder, setShowProfileBuilder] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
 
   // Check if profile needs to be built
   useEffect(() => {
@@ -37,6 +39,8 @@ const AppContent: React.FC = () => {
       // Aquí guardaríamos los datos en la base de datos
       // Por ahora, simplemente cerramos el profile builder
       setShowProfileBuilder(false);
+      setIsEditingProfile(false);
+      setActiveTab('explore');
       try { sessionStorage.removeItem('showProfileBuilder'); } catch (e) {}
     };
 
@@ -115,9 +119,27 @@ const AppContent: React.FC = () => {
     return <LoginScreen />;
   }
 
-  // Show profile builder if profile is incomplete
-  if (showProfileBuilder) {
+  // Show profile builder if profile is incomplete or editing
+  if (showProfileBuilder || isEditingProfile) {
     return <ProfileBuilder />;
+  }
+
+  // Show profile view
+  if (activeTab === 'profile') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Header activeTab={activeTab} onTabChange={setActiveTab} />
+        <div className="flex-1 pt-16">
+          <ProfileView
+            onEditClick={() => {
+              setIsEditingProfile(true);
+              setShowProfileBuilder(true);
+            }}
+            onClose={() => setActiveTab('explore')}
+          />
+        </div>
+      </div>
+    );
   }
 
   const renderContent = () => {

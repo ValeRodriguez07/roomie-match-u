@@ -161,14 +161,18 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
             </button>
 
             {/* User Profile */}
-            <div className="flex items-center space-x-2">
+            <button
+              onClick={() => onTabChange('profile')}
+              className="flex items-center space-x-2 hover:bg-gray-50 rounded-lg px-2 py-1 transition-colors"
+              title="View Profile"
+            >
               <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
                 <User size={16} className="text-primary-600" />
               </div>
               <span className="text-sm font-medium text-gray-700 hidden sm:block">
                 {user.name}
               </span>
-            </div>
+            </button>
 
             {/* Logout */}
             <button

@@ -190,6 +190,12 @@ export const translations = {
     redirectingHome: "Redirecting to home...",
     saveError: "Error saving profile",
     requiredFields: "Please fill in all required fields",
+    verified: "Verified",
+    editProfile: "Edit Profile",
+    personalInformation: "Personal Information",
+    lifestyle: "Lifestyle",
+    housingSearch: "Housing Search",
+    housingOffer: "Housing Offer",
   },
   es: {
     welcome: "Bienvenido a Roomie Match U",
@@ -383,6 +389,12 @@ export const translations = {
     redirectingHome: "Redirigiendo a inicio...",
     saveError: "Error al guardar el perfil",
     requiredFields: "Por favor completa todos los campos requeridos",
+    verified: "Verificado",
+    editProfile: "Editar Perfil",
+    personalInformation: "Información Personal",
+    lifestyle: "Estilo de Vida",
+    housingSearch: "Búsqueda de Vivienda",
+    housingOffer: "Oferta de Vivienda",
   }
 };
 
