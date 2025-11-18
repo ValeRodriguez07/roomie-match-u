@@ -1,14 +1,15 @@
 import React from "react";
-import { MapPin, DollarSign, Users, Calendar } from "lucide-react";
+import { MapPin, DollarSign, Users, Calendar, Edit, Trash2 } from "lucide-react";
 import type { Publication } from "../types";
 import { useApp } from "../context/AppContext";
-import { convertCurrency, formatCurrency } from "../utils/currency";
 
 interface PublicationCardProps {
   publication: Publication;
   onLike?: (publication: Publication) => void;
   onDislike?: (publication: Publication) => void;
   showActions?: boolean;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 export const PublicationCard: React.FC<PublicationCardProps> = ({
@@ -16,8 +17,10 @@ export const PublicationCard: React.FC<PublicationCardProps> = ({
   onLike,
   onDislike,
   showActions = true,
+  onEdit,
+  onDelete,
 }) => {
-  const { t, language, selectedCurrency } = useApp();
+  const { t, language } = useApp();
 
   const roomTypeLabels = {
     single: t("single"),
@@ -26,8 +29,10 @@ export const PublicationCard: React.FC<PublicationCardProps> = ({
   };
 
   const formatPrice = (price: number) => {
-    const convertedPrice = convertCurrency(price, publication.currency, selectedCurrency);
-    return formatCurrency(convertedPrice, selectedCurrency, language);
+    return new Intl.NumberFormat(language === "es" ? "es-ES" : "en-US", {
+      style: "currency",
+      currency: language === "es" ? "EUR" : "USD",
+    }).format(price);
   };
 
   const formatDate = (date: Date) => {
@@ -110,18 +115,41 @@ export const PublicationCard: React.FC<PublicationCardProps> = ({
         {/* Actions */}
         {showActions && (
           <div className="flex space-x-2">
-            <button
-              onClick={() => onDislike?.(publication)}
-              className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-            >
-              {t("notInterested")}
-            </button>
-            <button
-              onClick={() => onLike?.(publication)}
-              className="flex-1 bg-primary-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-primary-700 transition-colors"
-            >
-              {t("interested")}
-            </button>
+            {onEdit && onDelete ? (
+              // Edit and Delete buttons for publication management
+              <>
+                <button
+                  onClick={onEdit}
+                  className="flex-1 bg-blue-100 text-blue-700 py-2 px-4 rounded-lg font-medium hover:bg-blue-200 transition-colors flex items-center justify-center space-x-2"
+                >
+                  <Edit size={16} />
+                  <span>Editar</span>
+                </button>
+                <button
+                  onClick={onDelete}
+                  className="flex-1 bg-red-100 text-red-700 py-2 px-4 rounded-lg font-medium hover:bg-red-200 transition-colors flex items-center justify-center space-x-2"
+                >
+                  <Trash2 size={16} />
+                  <span>Eliminar</span>
+                </button>
+              </>
+            ) : (
+              // Like and Dislike buttons for browsing
+              <>
+                <button
+                  onClick={() => onDislike?.(publication)}
+                  className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                >
+                  {t("notInterested")}
+                </button>
+                <button
+                  onClick={() => onLike?.(publication)}
+                  className="flex-1 bg-primary-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-primary-700 transition-colors"
+                >
+                  {t("interested")}
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>

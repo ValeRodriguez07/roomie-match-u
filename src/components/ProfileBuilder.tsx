@@ -3,6 +3,8 @@ import { useApp } from '../context/AppContext';
 import { Upload, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getNeighborhoodsByCity } from '../data/neighborhoods';
 import { userService } from '../services/UserService';
+import { publicationService } from '../services/PublicationService';
+import type { Publication } from '../types';
 
 interface ProfileBuilderProps {
   isEditing?: boolean;

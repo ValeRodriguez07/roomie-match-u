@@ -98,6 +98,7 @@ export interface Publication {
   city: string;
   country: string;
   images: string[];
+  videos: string[];
   amenities: string[];
   rules: string[];
   availableFrom: Date;

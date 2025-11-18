@@ -3,6 +3,7 @@ import { eventBus } from "./EventBus";
 import { mockUsers } from "../data/mockData";
 import { StorageService } from "../utils/storage";
 import type { StoredUser } from "../utils/storage";
+import { publicationService } from "./PublicationService";
 
 class UserService {
   private users: Map<string, User> = new Map();
@@ -213,6 +214,28 @@ class UserService {
         ...user,
         createdAt: user.createdAt.toISOString(),
       });
+    }
+
+    // If user is offering housing, create a publication from their profile data
+    if (profileData.type === 'tengo_lugar' && profileData.offeringHousing) {
+      const publicationData = {
+        userId: userId,
+        title: `Habitación en ${profileData.offeringHousing.zone}`,
+        description: `Habitación disponible con ${profileData.offeringHousing.availableRooms} habitaciones. Servicios incluidos: ${profileData.offeringHousing.servicesIncluded?.join(', ') || 'No especificados'}. Reglas: ${profileData.offeringHousing.houseRules?.join(', ') || 'No especificadas'}. ${profileData.offeringHousing.petFriendly ? 'Se aceptan mascotas.' : 'No se aceptan mascotas.'}`,
+        price: profileData.offeringHousing.pricePerRoom,
+        currency: 'EUR', // Default currency, can be changed later
+        location: profileData.offeringHousing.zone,
+        city: user.preferences.city,
+        country: user.preferences.country,
+        images: profileData.offeringHousing.propertyPhotos || [],
+        videos: profileData.offeringHousing.propertyVideo ? [profileData.offeringHousing.propertyVideo] : [],
+        amenities: profileData.offeringHousing.servicesIncluded || [],
+        rules: profileData.offeringHousing.houseRules || [],
+        availableFrom: new Date(),
+        roomType: 'shared' as const, // Default, can be changed later
+      };
+
+      await publicationService.createPublication(publicationData);
     }
 
     // Emit event for profile completion

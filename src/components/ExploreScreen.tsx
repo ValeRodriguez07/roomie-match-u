@@ -1,18 +1,23 @@
-import React, { useState, useEffect } from "react";
-import { Heart, X, RotateCcw, Lock, Crown } from "lucide-react";
-import type { Publication } from "../types";
+import React, { useState, useEffect, useRef } from "react";
+import { Heart, X, RotateCcw, Lock, Crown, Upload } from "lucide-react";
+import type { Publication, SupportedCurrency } from "../types";
 import { TinderCard } from "./TinderCard";
+import { PublicationCard } from "./PublicationCard";
 import { usePublications } from "../hooks/usePublications";
 import { matchingService } from "../services/MatchingService";
+import { publicationService } from "../services/PublicationService";
 import { useApp } from "../context/AppContext";
 import { useMatches } from "../hooks/useMatches";
+import { convertCurrency, formatCurrency } from "../utils/currency";
 
 export const ExploreScreen: React.FC = () => {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [viewCount, setViewCount] = useState(0);
   const [discardedStack, setDiscardedStack] = useState<Publication[]>([]);
   const [showPaywall, setShowPaywall] = useState(false);
-  const { publications, loading, error, loadPublications } = usePublications();
+  const [editingPublication, setEditingPublication] = useState<Publication | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const { publications, loading, error, loadPublications, updatePublication } = usePublications();
   const { user, t } = useApp();
   const { matches } = useMatches();
 
@@ -98,6 +103,31 @@ export const ExploreScreen: React.FC = () => {
     setViewCount(0);
     setDiscardedStack([]);
   }, [publications]);
+
+  // Handle publication creation from profile builder
+  useEffect(() => {
+    const handleCreatePublication = () => {
+      // Navigate to profile builder in publication creation mode
+      window.dispatchEvent(new CustomEvent('showProfileBuilder', {
+        detail: { mode: 'createPublication' }
+      }));
+    };
+
+    const handleEditPublication = (event: any) => {
+      // Navigate to profile builder in publication edit mode
+      window.dispatchEvent(new CustomEvent('showProfileBuilder', {
+        detail: { mode: 'editPublication', publication: event.detail }
+      }));
+    };
+
+    window.addEventListener('navigateToCreatePublication', handleCreatePublication);
+    window.addEventListener('navigateToEditPublication', handleEditPublication);
+
+    return () => {
+      window.removeEventListener('navigateToCreatePublication', handleCreatePublication);
+      window.removeEventListener('navigateToEditPublication', handleEditPublication);
+    };
+  }, []);
 
   const handleCardView = () => {
     if (viewCount >= SEEKER_VIEW_LIMIT) {
@@ -208,12 +238,18 @@ export const ExploreScreen: React.FC = () => {
             )}
           </div>
         ) : (
-          // Publication management for offerers (unchanged)
+          // Publication management for offerers
           <div className="space-y-6 h-full overflow-y-auto">
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">Mis Publicaciones</h2>
-                <button className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors">
+                <button
+                  onClick={() => {
+                    // Navigate to create new publication - using profile builder with publication mode
+                    window.dispatchEvent(new CustomEvent('navigateToCreatePublication'));
+                  }}
+                  className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+                >
                   + Nueva Publicación
                 </button>
               </div>
@@ -222,7 +258,13 @@ export const ExploreScreen: React.FC = () => {
                 <div className="text-center py-12">
                   <div className="text-gray-500">
                     <p className="mb-4">Aún no has creado ninguna publicación</p>
-                    <button className="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors">
+                    <button
+                      onClick={() => {
+                        // Navigate to create new publication
+                        window.dispatchEvent(new CustomEvent('navigateToCreatePublication'));
+                      }}
+                      className="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors"
+                    >
                       Crear Primera Publicación
                     </button>
                   </div>
@@ -230,41 +272,297 @@ export const ExploreScreen: React.FC = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {publications.filter(p => p.userId === user?.id).map((publication) => (
-                    <div key={publication.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-                      <div className="h-48 bg-gray-200">
-                        {publication.images[0] && (
-                          <img
-                            src={publication.images[0]}
-                            alt={publication.title}
-                            className="w-full h-full object-cover"
-                          />
-                        )}
-                      </div>
-                      <div className="p-4">
-                        <h3 className="font-semibold text-gray-900 mb-2">{publication.title}</h3>
-                        <p className="text-primary-600 font-bold">${publication.price}/mes</p>
-                        <div className="flex justify-between items-center mt-4">
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            publication.status === 'active'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {publication.status === 'active' ? 'Activa' : 'Inactiva'}
-                          </span>
-                          <div className="flex space-x-2">
-                            <button className="text-blue-600 hover:text-blue-800 text-sm">Editar</button>
-                            <button className="text-red-600 hover:text-red-800 text-sm">Eliminar</button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    <PublicationCard
+                      key={publication.id}
+                      publication={publication}
+                      showActions={true}
+                      onEdit={() => {
+                        setEditingPublication(publication);
+                        setShowEditModal(true);
+                      }}
+                      onDelete={async () => {
+                        if (window.confirm('¿Estás seguro de que quieres eliminar esta publicación?')) {
+                          try {
+                            await publicationService.deletePublication(publication.id);
+                            // Reload publications
+                            loadPublications();
+                          } catch (error) {
+                            console.error('Error deleting publication:', error);
+                            alert('Error al eliminar la publicación');
+                          }
+                        }
+                      }}
+                    />
                   ))}
                 </div>
               )}
             </div>
           </div>
         )}
+
+        {/* Edit Publication Modal */}
+        {showEditModal && editingPublication && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold text-gray-900">{t('edit')} Publicación</h3>
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingPublication(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <EditPublicationForm
+                publication={editingPublication}
+                onSave={async (updatedData) => {
+                  try {
+                    await updatePublication(editingPublication.id, updatedData);
+                    setShowEditModal(false);
+                    setEditingPublication(null);
+                    loadPublications();
+                  } catch (error) {
+                    console.error('Error updating publication:', error);
+                    alert('Error al actualizar la publicación');
+                  }
+                }}
+                onCancel={() => {
+                  setShowEditModal(false);
+                  setEditingPublication(null);
+                }}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
+  );
+};
+
+// Edit Publication Form Component
+const EditPublicationForm: React.FC<{
+  publication: Publication;
+  onSave: (data: Partial<Publication>) => void;
+  onCancel: () => void;
+}> = ({ publication, onSave, onCancel }) => {
+  const { t } = useApp();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [formData, setFormData] = useState({
+    title: publication.title,
+    description: publication.description,
+    price: publication.price,
+    location: publication.location,
+    city: publication.city,
+    country: publication.country,
+    currency: publication.currency,
+    availableFrom: publication.availableFrom,
+    roomType: publication.roomType,
+    amenities: publication.amenities || [],
+    rules: publication.rules || [],
+    images: publication.images || [],
+    videos: publication.videos || [],
+  });
+
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  const handleAmenityToggle = (amenity: string) => {
+    setFormData(prev => ({
+      ...prev,
+      amenities: prev.amenities.includes(amenity)
+        ? prev.amenities.filter(a => a !== amenity)
+        : [...prev.amenities, amenity]
+    }));
+  };
+
+  const handleRuleToggle = (rule: string) => {
+    setFormData(prev => ({
+      ...prev,
+      rules: prev.rules.includes(rule)
+        ? prev.rules.filter(r => r !== rule)
+        : [...prev.rules, rule]
+    }));
+  };
+
+  const amenities = ['internet', 'agua', 'lavadora', 'secadora', 'amoblado', 'bano', 'television', 'cocina', 'nevera', 'parqueadero', 'espaciosComunes', 'accesoInclusivo'];
+  const rules = ['visitas', 'horarios', 'fiestas', 'limpieza', 'ruido'];
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          setFormData(prev => ({
+            ...prev,
+            images: [...prev.images, result]
+          }));
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
+
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Título</label>
+        <input
+          type="text"
+          value={formData.title}
+          onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+        <textarea
+          value={formData.description}
+          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 h-24"
+          required
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Precio por habitación</label>
+          <input
+            type="number"
+            value={formData.price}
+            onChange={(e) => setFormData(prev => ({ ...prev, price: Number(e.target.value) }))}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            min="0"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Ubicación</label>
+          <input
+            type="text"
+            value={formData.location}
+            onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-3">Servicios incluidos</label>
+        <div className="grid grid-cols-2 gap-3">
+          {amenities.map(amenity => (
+            <label key={amenity} className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.amenities.includes(amenity)}
+                onChange={() => handleAmenityToggle(amenity)}
+                className="w-4 h-4 text-blue-500 rounded"
+              />
+              <span className="text-sm text-gray-700">{t(amenity as any)}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-3">Reglas de la casa</label>
+        <div className="flex flex-col gap-2">
+          {rules.map(rule => (
+            <label key={rule} className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.rules.includes(rule)}
+                onChange={() => handleRuleToggle(rule)}
+                className="w-4 h-4 text-blue-500 rounded"
+              />
+              <span className="text-sm text-gray-700">{t(rule as any)}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-3">Imágenes de la publicación</label>
+        <div className="space-y-3">
+          {formData.images.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {formData.images.map((image, index) => (
+                <div key={index} className="relative">
+                  <img
+                    src={image}
+                    alt={`Imagen ${index + 1}`}
+                    className="w-full h-24 object-cover rounded-lg border"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full py-8 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 hover:border-blue-500 transition cursor-pointer"
+          >
+            <Upload size={32} className="text-gray-400" />
+            <span className="text-gray-600">Agregar imágenes</span>
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handlePhotoUpload}
+            className="hidden"
+          />
+        </div>
+      </div>
+
+
+
+      <div className="flex justify-end space-x-4 pt-4">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+        >
+          Guardar Cambios
+        </button>
+      </div>
+    </form>
   );
 };
